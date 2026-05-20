@@ -65,10 +65,14 @@ class ChatRequest(BaseModel):
 # =====================================================
 # CHAT ENDPOINT
 # =====================================================
+@app.post("/test")
+def test():
+    print("TEST HIT")
+    return {"ok": True}
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-
+    print(" CHAT ENDPOINT HIT")
     chat_id = request.chat_id
     phone_number = request.phone_number
     message = request.message.strip()
