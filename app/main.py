@@ -372,7 +372,9 @@ def chat(request: ChatRequest):
         "response": "Sorry, I couldn't process your request."
     }
 
-
+@app.get("/")
+def home():
+    return {"message": "API is running"}
 
 # from fastapi import FastAPI
 # from pydantic import BaseModel
