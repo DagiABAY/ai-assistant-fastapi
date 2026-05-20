@@ -71,310 +71,315 @@ def test():
     return {"ok": True}
 
 @app.post("/chat")
-def chat(request: ChatRequest):
-    print(" CHAT ENDPOINT HIT")
-    chat_id = request.chat_id
-    phone_number = request.phone_number
-    message = request.message.strip()
+def chat(request: dict):
+    print("RAW CHAT HIT")
+    return {"ok": True, "received": request}
 
-    # =====================================================
-    # ACTIVE SESSION FLOW HANDLING
-    # =====================================================
+# @app.post("/chat")
+# def chat(request: ChatRequest):
+#     print(" CHAT ENDPOINT HIT")
+#     chat_id = request.chat_id
+#     phone_number = request.phone_number
+#     message = request.message.strip()
 
-    if chat_id in sessions:
+#     # =====================================================
+#     # ACTIVE SESSION FLOW HANDLING
+#     # =====================================================
 
-        session = sessions[chat_id]
+#     if chat_id in sessions:
 
-        intent = session["intent"]
+#         session = sessions[chat_id]
 
-        if intent == "APPLY_ATM_CARD":
-            return handle_atm_card_flow(
-                sessions=sessions,
-                chat_id=chat_id,
-                phone_number=phone_number,  
-                message=message
-            )
+#         intent = session["intent"]
 
-        if intent == "LOCK_ATM_CARD":
-            return handle_lock_card_flow(
-                sessions=sessions,
-                chat_id=chat_id,
-                message=message
-            )
+#         if intent == "APPLY_ATM_CARD":
+#             return handle_atm_card_flow(
+#                 sessions=sessions,
+#                 chat_id=chat_id,
+#                 phone_number=phone_number,  
+#                 message=message
+#             )
 
-        if intent == "SET_ATM_WITHDRAWAL_LIMIT":
-            return handle_atm_limit_flow(
-                sessions=sessions,
-                chat_id=chat_id,
-                message=message
-            )
+#         if intent == "LOCK_ATM_CARD":
+#             return handle_lock_card_flow(
+#                 sessions=sessions,
+#                 chat_id=chat_id,
+#                 message=message
+#             )
 
-        if intent == "CREATE_BILL_REMINDER":
-            return handle_bill_reminder_flow(
-                sessions=sessions,
-                chat_id=chat_id,
-                message=message
-            )
+#         if intent == "SET_ATM_WITHDRAWAL_LIMIT":
+#             return handle_atm_limit_flow(
+#                 sessions=sessions,
+#                 chat_id=chat_id,
+#                 message=message
+#             )
 
-        if intent == "CREATE_BUDGET":
-            return handle_budget_reminder_flow(
-                sessions=sessions,
-                chat_id=chat_id,
-                message=message
-            )
+#         if intent == "CREATE_BILL_REMINDER":
+#             return handle_bill_reminder_flow(
+#                 sessions=sessions,
+#                 chat_id=chat_id,
+#                 message=message
+#             )
+
+#         if intent == "CREATE_BUDGET":
+#             return handle_budget_reminder_flow(
+#                 sessions=sessions,
+#                 chat_id=chat_id,
+#                 message=message
+#             )
 
 
-        if intent == "CREATE_TRANSFER_REMINDER":
-            return handle_transfer_reminder_flow(
-                sessions=sessions,
-                chat_id=chat_id,
-                message=message
-            )
+#         if intent == "CREATE_TRANSFER_REMINDER":
+#             return handle_transfer_reminder_flow(
+#                 sessions=sessions,
+#                 chat_id=chat_id,
+#                 message=message
+#             )
             
-        if intent == "TRANSFER_MONEY":
-            return handle_transfer_flow(
-                sessions=sessions,
-                chat_id=chat_id,
-                phone_number=phone_number,  
-                message=message
-            )
-    # =====================================================
-    # VECTOR SEARCH
-    # =====================================================
+#         if intent == "TRANSFER_MONEY":
+#             return handle_transfer_flow(
+#                 sessions=sessions,
+#                 chat_id=chat_id,
+#                 phone_number=phone_number,  
+#                 message=message
+#             )
+#     # =====================================================
+#     # VECTOR SEARCH
+#     # =====================================================
 
-    vector_result = intent_service.detect(message)
+#     vector_result = intent_service.detect(message)
 
-    vector_intent = vector_result["intent"]
-    vector_confidence = vector_result["confidence"]
+#     vector_intent = vector_result["intent"]
+#     vector_confidence = vector_result["confidence"]
 
-    print("Vector Intent:", vector_intent)
-    print("Vector Confidence:", vector_confidence)
+#     print("Vector Intent:", vector_intent)
+#     print("Vector Confidence:", vector_confidence)
 
-    # =====================================================
-    # LLM INTENT EXTRACTION
-    # =====================================================
+#     # =====================================================
+#     # LLM INTENT EXTRACTION
+#     # =====================================================
 
-    llm_result = llm_service.extract_intent(message)
+#     llm_result = llm_service.extract_intent(message)
 
-    llm_intent = llm_result.get("intent", "CHAT")
+#     llm_intent = llm_result.get("intent", "CHAT")
 
-    print("LLM Intent:", llm_intent)
+#     print("LLM Intent:", llm_intent)
 
-    # =====================================================
-    # FINAL INTENT DECISION
-    # =====================================================
+#     # =====================================================
+#     # FINAL INTENT DECISION
+#     # =====================================================
 
-    final_intent = "CHAT"
+#     final_intent = "CHAT"
 
-    if (
-        vector_confidence > 0.55
-        and vector_intent == llm_intent
-    ):
-        final_intent = llm_intent
+#     if (
+#         vector_confidence > 0.55
+#         and vector_intent == llm_intent
+#     ):
+#         final_intent = llm_intent
 
-    elif llm_intent in BANKING_INTENTS:
-        final_intent = llm_intent
+#     elif llm_intent in BANKING_INTENTS:
+#         final_intent = llm_intent
 
-    elif llm_intent == "REJECT":
-        final_intent = "REJECT"
+#     elif llm_intent == "REJECT":
+#         final_intent = "REJECT"
 
-    print("Final Intent:", final_intent)
+#     print("Final Intent:", final_intent)
 
-    # =====================================================
-    # FLOW STARTERS
-    # =====================================================
+#     # =====================================================
+#     # FLOW STARTERS
+#     # =====================================================
 
-    if final_intent == "APPLY_ATM_CARD":
+#     if final_intent == "APPLY_ATM_CARD":
 
-        sessions[chat_id] = {
-            "intent": "APPLY_ATM_CARD",
-            "step": 2,
-            "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
-        }
-        return {
-            "response": "Please select the reason for ATM card request.",
-            "payload": {
-                "intent": "APPLY_ATM_CARD",
-                "type": "SELECTION",
-                "field": "reason",
-                "options": [
-                    "NEW_REQUEST",
-                    "LOST_CARD",
-                    "DAMAGED_CARD"
-                ]
-            }
-        }
+#         sessions[chat_id] = {
+#             "intent": "APPLY_ATM_CARD",
+#             "step": 2,
+#             "phone_number": phone_number,
+#             "data": {
+#                 "phone_number": phone_number
+#             }
+#         }
+#         return {
+#             "response": "Please select the reason for ATM card request.",
+#             "payload": {
+#                 "intent": "APPLY_ATM_CARD",
+#                 "type": "SELECTION",
+#                 "field": "reason",
+#                 "options": [
+#                     "NEW_REQUEST",
+#                     "LOST_CARD",
+#                     "DAMAGED_CARD"
+#                 ]
+#             }
+#         }
 
-    if final_intent == "LOCK_ATM_CARD":
+#     if final_intent == "LOCK_ATM_CARD":
 
-        sessions[chat_id] = {
-            "intent": "LOCK_ATM_CARD",
-            "step": 2,
-            "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
-        }
+#         sessions[chat_id] = {
+#             "intent": "LOCK_ATM_CARD",
+#             "step": 2,
+#             "phone_number": phone_number,
+#             "data": {
+#                 "phone_number": phone_number
+#             }
+#         }
         
-        return {
-            "response": "Please select the reason for ATM card lock request.",
-            "payload": {
-                "intent": "LOCK_ATM_CARD",
-                "type": "SELECTION",
-                "field": "reason",
-                "options": [
-                    "LOST_CARD",
-                    "STOLEN_CARD",
-                    "FRAUD_SUSPECTED",
-                    "OTHER"
-                ]
-            }
-        }
+#         return {
+#             "response": "Please select the reason for ATM card lock request.",
+#             "payload": {
+#                 "intent": "LOCK_ATM_CARD",
+#                 "type": "SELECTION",
+#                 "field": "reason",
+#                 "options": [
+#                     "LOST_CARD",
+#                     "STOLEN_CARD",
+#                     "FRAUD_SUSPECTED",
+#                     "OTHER"
+#                 ]
+#             }
+#         }
 
-    if final_intent == "SET_ATM_WITHDRAWAL_LIMIT":
+#     if final_intent == "SET_ATM_WITHDRAWAL_LIMIT":
 
-        sessions[chat_id] = {
-            "intent": "SET_ATM_WITHDRAWAL_LIMIT",
-            "step": 2,
-            "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
-        }
+#         sessions[chat_id] = {
+#             "intent": "SET_ATM_WITHDRAWAL_LIMIT",
+#             "step": 2,
+#             "phone_number": phone_number,
+#             "data": {
+#                 "phone_number": phone_number
+#             }
+#         }
 
-        return {
-            "response": "Until what date should this ATM withdrawal limit apply?",
-            "payload": {
-                    "intent": "SET_ATM_WITHDRAW_LIMIT",
-                    "type": "DATE_PICKER",
-                    "field": "expiry_date",
-                    "min_date": "2025-01-01",
-                    "max_date": "2026-12-31",
-                    "display_format": "DD/MM/YYYY"
-            }
+#         return {
+#             "response": "Until what date should this ATM withdrawal limit apply?",
+#             "payload": {
+#                     "intent": "SET_ATM_WITHDRAW_LIMIT",
+#                     "type": "DATE_PICKER",
+#                     "field": "expiry_date",
+#                     "min_date": "2025-01-01",
+#                     "max_date": "2026-12-31",
+#                     "display_format": "DD/MM/YYYY"
+#             }
            
-        }
+#         }
 
-    if final_intent == "CREATE_BILL_REMINDER":
+#     if final_intent == "CREATE_BILL_REMINDER":
 
-        sessions[chat_id] = {
-            "intent": "CREATE_BILL_REMINDER",
-            "step": 2,
-            "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
-        }
+#         sessions[chat_id] = {
+#             "intent": "CREATE_BILL_REMINDER",
+#             "step": 2,
+#             "phone_number": phone_number,
+#             "data": {
+#                 "phone_number": phone_number
+#             }
+#         }
 
-        return {
-            "response": "When would you like to be reminded?",
-            "payload": {
-                    "intent": "CREATE_BILL_REMINDER",
-                    "type": "DATE_PICKER",
-                    "field": "expiry_date",
-                    "min_date": "2025-01-01",
-                    "max_date": "2026-12-31",
-                    "display_format": "DD/MM/YYYY"
-            }
+#         return {
+#             "response": "When would you like to be reminded?",
+#             "payload": {
+#                     "intent": "CREATE_BILL_REMINDER",
+#                     "type": "DATE_PICKER",
+#                     "field": "expiry_date",
+#                     "min_date": "2025-01-01",
+#                     "max_date": "2026-12-31",
+#                     "display_format": "DD/MM/YYYY"
+#             }
            
-        }
+#         }
 
 
-    if final_intent == "CREATE_TRANSFER_REMINDER":
+#     if final_intent == "CREATE_TRANSFER_REMINDER":
 
-        sessions[chat_id] = {
-            "intent": "CREATE_TRANSFER_REMINDER",
-            "step": 2,
-            "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
-        }
+#         sessions[chat_id] = {
+#             "intent": "CREATE_TRANSFER_REMINDER",
+#             "step": 2,
+#             "phone_number": phone_number,
+#             "data": {
+#                 "phone_number": phone_number
+#             }
+#         }
 
-        return {
-            "response": "Sure. Who would you like to send money to?"
-        }
+#         return {
+#             "response": "Sure. Who would you like to send money to?"
+#         }
     
-    if final_intent == "CREATE_BUDGET":
+#     if final_intent == "CREATE_BUDGET":
 
-        sessions[chat_id] = {
-            "intent": "CREATE_BUDGET",
-            "step": 2,
-            "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
-        }
+#         sessions[chat_id] = {
+#             "intent": "CREATE_BUDGET",
+#             "step": 2,
+#             "phone_number": phone_number,
+#             "data": {
+#                 "phone_number": phone_number
+#             }
+#         }
         
-        return {
-            "response": "Please select the category for your budget.",
-            "payload": {
-                "intent": "CREATE_BUDGET",
-                "type": "SELECTION",
-                "field": "category",
-                "options": [
-                    "FOOD",
-                    "TRANSPORT",
-                    "ENTERTAINMENT",
-                    "UTILITIES",
-                    "HEALTH",
-                    "EDUCATION",
-                    "SHOPPING",
-                    "TRAVEL",
-                    "OTHER"
-                ]
-            }
-        }
-    # =====================================================
-    # BANKING HANDLERS
-    # =====================================================
+#         return {
+#             "response": "Please select the category for your budget.",
+#             "payload": {
+#                 "intent": "CREATE_BUDGET",
+#                 "type": "SELECTION",
+#                 "field": "category",
+#                 "options": [
+#                     "FOOD",
+#                     "TRANSPORT",
+#                     "ENTERTAINMENT",
+#                     "UTILITIES",
+#                     "HEALTH",
+#                     "EDUCATION",
+#                     "SHOPPING",
+#                     "TRAVEL",
+#                     "OTHER"
+#                 ]
+#             }
+#         }
+#     # =====================================================
+#     # BANKING HANDLERS
+#     # =====================================================
 
-    if final_intent == "CHECK_BALANCE":
-        return handle_balance(phone_number)
+#     if final_intent == "CHECK_BALANCE":
+#         return handle_balance(phone_number)
 
-    if final_intent == "ACCOUNT_INFO":
-        return handle_account_info(phone_number)
+#     if final_intent == "ACCOUNT_INFO":
+#         return handle_account_info(phone_number)
     
-    if final_intent == "TRANSFER_MONEY":
-         sessions[chat_id] = {
-            "intent": "TRANSFER_MONEY",
-            "step": 2,
-            "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
-        }
-         return handle_account_list(chat_id,phone_number)
+#     if final_intent == "TRANSFER_MONEY":
+#          sessions[chat_id] = {
+#             "intent": "TRANSFER_MONEY",
+#             "step": 2,
+#             "phone_number": phone_number,
+#             "data": {
+#                 "phone_number": phone_number
+#             }
+#         }
+#          return handle_account_list(chat_id,phone_number)
 
-    # =====================================================
-    # GENERAL CHAT
-    # =====================================================
+#     # =====================================================
+#     # GENERAL CHAT
+#     # =====================================================
 
-    if final_intent == "CHAT":
-        return handle_chat(message)
+#     if final_intent == "CHAT":
+#         return handle_chat(message)
 
-    # =====================================================
-    # REJECT
-    # =====================================================
+#     # =====================================================
+#     # REJECT
+#     # =====================================================
 
-    if final_intent == "REJECT":
+#     if final_intent == "REJECT":
 
-        return {
-            "response": (
-                "Sorry, I can only help with banking-related requests."
-            )
-        }
+#         return {
+#             "response": (
+#                 "Sorry, I can only help with banking-related requests."
+#             )
+#         }
 
-    # =====================================================
-    # FALLBACK
-    # =====================================================
+#     # =====================================================
+#     # FALLBACK
+#     # =====================================================
 
-    return {
-        "response": "Sorry, I couldn't process your request."
-    }
+#     return {
+#         "response": "Sorry, I couldn't process your request."
+#     }
 
 @app.get("/")
 def home():
