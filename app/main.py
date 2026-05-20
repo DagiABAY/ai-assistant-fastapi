@@ -92,14 +92,13 @@ async def chat(request: Request):
     if chat_id in sessions:
 
         session = sessions[chat_id]
-
         intent = session["intent"]
 
         if intent == "APPLY_ATM_CARD":
             return handle_atm_card_flow(
                 sessions=sessions,
                 chat_id=chat_id,
-                phone_number=phone_number,  
+                phone_number=phone_number,
                 message=message
             )
 
@@ -131,27 +130,26 @@ async def chat(request: Request):
                 message=message
             )
 
-
         if intent == "CREATE_TRANSFER_REMINDER":
             return handle_transfer_reminder_flow(
                 sessions=sessions,
                 chat_id=chat_id,
                 message=message
             )
-            
+
         if intent == "TRANSFER_MONEY":
             return handle_transfer_flow(
                 sessions=sessions,
                 chat_id=chat_id,
-                phone_number=phone_number,  
+                phone_number=phone_number,
                 message=message
             )
+
     # =====================================================
     # VECTOR SEARCH
     # =====================================================
 
     vector_result = intent_service.detect(message)
-
     vector_intent = vector_result["intent"]
     vector_confidence = vector_result["confidence"]
 
@@ -163,7 +161,6 @@ async def chat(request: Request):
     # =====================================================
 
     llm_result = llm_service.extract_intent(message)
-
     llm_intent = llm_result.get("intent", "CHAT")
 
     print("LLM Intent:", llm_intent)
@@ -174,10 +171,7 @@ async def chat(request: Request):
 
     final_intent = "CHAT"
 
-    if (
-        vector_confidence > 0.55
-        and vector_intent == llm_intent
-    ):
+    if vector_confidence > 0.55 and vector_intent == llm_intent:
         final_intent = llm_intent
 
     elif llm_intent in BANKING_INTENTS:
@@ -198,21 +192,16 @@ async def chat(request: Request):
             "intent": "APPLY_ATM_CARD",
             "step": 2,
             "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
+            "data": {"phone_number": phone_number}
         }
+
         return {
             "response": "Please select the reason for ATM card request.",
             "payload": {
                 "intent": "APPLY_ATM_CARD",
                 "type": "SELECTION",
                 "field": "reason",
-                "options": [
-                    "NEW_REQUEST",
-                    "LOST_CARD",
-                    "DAMAGED_CARD"
-                ]
+                "options": ["NEW_REQUEST", "LOST_CARD", "DAMAGED_CARD"]
             }
         }
 
@@ -222,23 +211,16 @@ async def chat(request: Request):
             "intent": "LOCK_ATM_CARD",
             "step": 2,
             "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
+            "data": {"phone_number": phone_number}
         }
-        
+
         return {
             "response": "Please select the reason for ATM card lock request.",
             "payload": {
                 "intent": "LOCK_ATM_CARD",
                 "type": "SELECTION",
                 "field": "reason",
-                "options": [
-                    "LOST_CARD",
-                    "STOLEN_CARD",
-                    "FRAUD_SUSPECTED",
-                    "OTHER"
-                ]
+                "options": ["LOST_CARD", "STOLEN_CARD", "FRAUD_SUSPECTED", "OTHER"]
             }
         }
 
@@ -248,22 +230,19 @@ async def chat(request: Request):
             "intent": "SET_ATM_WITHDRAWAL_LIMIT",
             "step": 2,
             "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
+            "data": {"phone_number": phone_number}
         }
 
         return {
             "response": "Until what date should this ATM withdrawal limit apply?",
             "payload": {
-                    "intent": "SET_ATM_WITHDRAW_LIMIT",
-                    "type": "DATE_PICKER",
-                    "field": "expiry_date",
-                    "min_date": "2025-01-01",
-                    "max_date": "2026-12-31",
-                    "display_format": "DD/MM/YYYY"
+                "intent": "SET_ATM_WITHDRAW_LIMIT",
+                "type": "DATE_PICKER",
+                "field": "expiry_date",
+                "min_date": "2025-01-01",
+                "max_date": "2026-12-31",
+                "display_format": "DD/MM/YYYY"
             }
-           
         }
 
     if final_intent == "CREATE_BILL_REMINDER":
@@ -272,24 +251,20 @@ async def chat(request: Request):
             "intent": "CREATE_BILL_REMINDER",
             "step": 2,
             "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
+            "data": {"phone_number": phone_number}
         }
 
         return {
             "response": "When would you like to be reminded?",
             "payload": {
-                    "intent": "CREATE_BILL_REMINDER",
-                    "type": "DATE_PICKER",
-                    "field": "expiry_date",
-                    "min_date": "2025-01-01",
-                    "max_date": "2026-12-31",
-                    "display_format": "DD/MM/YYYY"
+                "intent": "CREATE_BILL_REMINDER",
+                "type": "DATE_PICKER",
+                "field": "expiry_date",
+                "min_date": "2025-01-01",
+                "max_date": "2026-12-31",
+                "display_format": "DD/MM/YYYY"
             }
-           
         }
-
 
     if final_intent == "CREATE_TRANSFER_REMINDER":
 
@@ -297,26 +272,20 @@ async def chat(request: Request):
             "intent": "CREATE_TRANSFER_REMINDER",
             "step": 2,
             "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
+            "data": {"phone_number": phone_number}
         }
 
-        return {
-            "response": "Sure. Who would you like to send money to?"
-        }
-    
+        return {"response": "Sure. Who would you like to send money to?"}
+
     if final_intent == "CREATE_BUDGET":
 
         sessions[chat_id] = {
             "intent": "CREATE_BUDGET",
             "step": 2,
             "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
+            "data": {"phone_number": phone_number}
         }
-        
+
         return {
             "response": "Please select the category for your budget.",
             "payload": {
@@ -324,18 +293,12 @@ async def chat(request: Request):
                 "type": "SELECTION",
                 "field": "category",
                 "options": [
-                    "FOOD",
-                    "TRANSPORT",
-                    "ENTERTAINMENT",
-                    "UTILITIES",
-                    "HEALTH",
-                    "EDUCATION",
-                    "SHOPPING",
-                    "TRAVEL",
-                    "OTHER"
+                    "FOOD", "TRANSPORT", "ENTERTAINMENT", "UTILITIES",
+                    "HEALTH", "EDUCATION", "SHOPPING", "TRAVEL", "OTHER"
                 ]
             }
         }
+
     # =====================================================
     # BANKING HANDLERS
     # =====================================================
@@ -345,17 +308,15 @@ async def chat(request: Request):
 
     if final_intent == "ACCOUNT_INFO":
         return handle_account_info(phone_number)
-    
+
     if final_intent == "TRANSFER_MONEY":
-         sessions[chat_id] = {
+        sessions[chat_id] = {
             "intent": "TRANSFER_MONEY",
             "step": 2,
             "phone_number": phone_number,
-            "data": {
-                "phone_number": phone_number
-            }
+            "data": {"phone_number": phone_number}
         }
-         return handle_account_list(chat_id,phone_number)
+        return handle_account_list(chat_id, phone_number)
 
     # =====================================================
     # GENERAL CHAT
@@ -369,21 +330,11 @@ async def chat(request: Request):
     # =====================================================
 
     if final_intent == "REJECT":
-
         return {
-            "response": (
-                "Sorry, I can only help with banking-related requests."
-            )
+            "response": "Sorry, I can only help with banking-related requests."
         }
 
-    # =====================================================
-    # FALLBACK
-    # =====================================================
-
-    return {
-        "response": "Sorry, I couldn't process your request."
-    }
-
+    return {"response": "Sorry, I couldn't process your request."}
 @app.get("/")
 def home():
     return {"message": "API is running"}
