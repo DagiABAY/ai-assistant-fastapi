@@ -75,15 +75,15 @@ def test():
 #     print("RAW CHAT HIT")
 #     return {"ok": True, "received": request}
 
-@app.post("/chat")
-async def chat(request: Request):
+@app.get("/chat")
+async def chat():
     print("CHAT ENDPOINT HIT")
 
-    body = await request.json()
+    # body = await request.json()
 
-    chat_id = body.get("chat_id")
-    phone_number = body.get("phone_number")
-    message = (body.get("message") or "").strip()
+    chat_id = '0301492213'
+    phone_number = '0301492213'
+    message = 'Hi how are you'
 
     # =====================================================
     # ACTIVE SESSION FLOW HANDLING
